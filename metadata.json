@@ -1,0 +1,13 @@
+{
+  "name": "Skyset",
+  "description": "AI-powered trip planner for personalized itineraries, group travel coordination, social sharing, and real-time travel alerts.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "AI Trip Generation",
+    "Group Budgets",
+    "Social Feed",
+    "Real-time Updates"
+  ]
+}
