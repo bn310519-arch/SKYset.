@@ -213,7 +213,15 @@ function TripSummaryCard({ trip, index }: { trip: any; index: number; [key: stri
         >
             <div className="flex items-center gap-6 mb-6 md:mb-0">
                 <div className="h-20 w-20 rounded-2xl overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-700 border border-black/5">
-                    <img src={`https://picsum.photos/seed/${trip.id}/200/200`} className="w-full h-full object-cover" alt="Trip" />
+                    <img 
+                        src={`https://images.unsplash.com/photo-1500835595561-82a0c6499f5a?auto=format&fit=crop&q=80&w=200&h=200&destination=${encodeURIComponent(trip.destination)}`} 
+                        className="w-full h-full object-cover" 
+                        alt="Trip" 
+                        referrerPolicy="no-referrer" 
+                        onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&q=80&w=200&h=200';
+                        }}
+                    />
                 </div>
                 <div>
                     <h4 className="luxury-text text-2xl mb-1 text-black">{trip.destination}</h4>

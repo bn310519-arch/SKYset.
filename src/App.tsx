@@ -143,9 +143,21 @@ function Navbar() {
   
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass-panel border-b-0 py-4 px-6 md:px-12 flex items-center justify-between">
-      <Link to="/">
-        <Logo />
-      </Link>
+      <div className="flex items-center gap-6">
+        <Link to="/profile" className="flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full border-2 border-luxury-gold overflow-hidden hover:scale-105 transition-transform">
+            <img 
+              src="https://i.pravatar.cc/150?u=currentuser" 
+              className="w-full h-full object-cover" 
+              alt="Profile" 
+              referrerPolicy="no-referrer"
+            />
+          </div>
+        </Link>
+        <Link to="/">
+          <Logo />
+        </Link>
+      </div>
       
       <div className="hidden md:flex items-center gap-8 text-sm font-medium uppercase tracking-widest text-black/40">
         <Link to="/search" className="hover:text-black transition-colors flex items-center gap-2">

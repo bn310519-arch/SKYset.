@@ -1,7 +1,3 @@
-import { GoogleGenAI, Type } from "@google/genai";
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
-
 export interface AISuggestion {
   day: number;
   time: string;
@@ -13,30 +9,13 @@ export interface AISuggestion {
 
 export async function generateItinerary(destination: string, days: number, budget: string, details?: string): Promise<AISuggestion[]> {
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Generate a highly personalized ${days}-day travel itinerary for ${destination} with a ${budget} budget. ${details ? `Special focus/details: ${details}` : ''} Each day from 1 to ${days} MUST be included with at least 3 distinct time-stamped activities. Include specific activities, times, and estimated costs in USD.`,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              day: { type: Type.NUMBER },
-              time: { type: Type.STRING },
-              activity: { type: Type.STRING },
-              location: { type: Type.STRING },
-              estimatedCost: { type: Type.NUMBER },
-              reasoning: { type: Type.STRING },
-            },
-            required: ["day", "time", "activity", "location", "estimatedCost"],
-          },
-        },
-      },
+    const response = await fetch('/api/itinerary', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ destination, days, budget, details }),
     });
-
-    return JSON.parse(response.text || '[]');
+    if (!response.ok) throw new Error('Network response was not ok');
+    return await response.json();
   } catch (error) {
     console.error("AI Error:", error);
     return [];
@@ -45,14 +24,14 @@ export async function generateItinerary(destination: string, days: number, budge
 
 export async function getTravelAdvice(message: string, context: any) {
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: message,
-      config: {
-        systemInstruction: `You are Skyset's AI Travel Assistant. Help users plan trips, book flights/hotels, and provide local tips. Current User Context: ${JSON.stringify(context)}. Be professional, helpful, and concise.`,
-      },
+    const response = await fetch('/api/advice', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, context }),
     });
-    return response.text;
+    if (!response.ok) throw new Error('Network response was not ok');
+    const data = await response.json();
+    return data.text;
   } catch (error) {
     console.error("Chat Error:", error);
     return "I'm sorry, I'm having trouble connecting to my travel servers right now.";
@@ -62,28 +41,13 @@ export async function getTravelAdvice(message: string, context: any) {
 export async function getDestinationRecommendations(history: string[]): Promise<any[]> {
     if (history.length === 0) return [];
     try {
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: `Based on a user's search history: ${history.join(', ')}, suggest 3 unique travel destinations.`,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                id: { type: Type.STRING },
-                name: { type: Type.STRING },
-                country: { type: Type.STRING },
-                description: { type: Type.STRING },
-                highlights: { type: Type.ARRAY, items: { type: Type.STRING } }
-              },
-              required: ["id", "name", "country", "description"]
-            }
-          }
-        }
+      const response = await fetch('/api/recommendations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ history }),
       });
-      return JSON.parse(response.text || '[]');
+      if (!response.ok) throw new Error('Network response was not ok');
+      return await response.json();
     } catch (e) {
       return [];
     }
@@ -91,28 +55,13 @@ export async function getDestinationRecommendations(history: string[]): Promise<
 
 export async function getPersonaInsights(persona: string, destination: string): Promise<{ day1Insight: string; day2Insight: string; vibeRef: string }> {
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `For a traveler who identifies as a "${persona}" and is visiting "${destination}", provide: 
-      1. A short (15-20 words) poetic day 1 vision.
-      2. A short (15-20 words) sophisticated day 2 vision.
-      3. A unique 2-3 word vibe label for this pairing.
-      Format: JSON with keys "day1Insight", "day2Insight", "vibeRef".`,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            day1Insight: { type: Type.STRING },
-            day2Insight: { type: Type.STRING },
-            vibeRef: { type: Type.STRING },
-          },
-          required: ["day1Insight", "day2Insight", "vibeRef"],
-        },
-      },
+    const response = await fetch('/api/persona-insights', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ persona, destination }),
     });
-
-    return JSON.parse(response.text || '{"day1Insight": "","day2Insight": "","vibeRef": ""}');
+    if (!response.ok) throw new Error('Network response was not ok');
+    return await response.json();
   } catch (error) {
     return {
       day1Insight: "A curated arrival tailored to your sophisticated standards.",

@@ -17,6 +17,8 @@ export default function TripPlannerPage() {
   const [endDate, setEndDate] = useState('');
   const [budget, setBudget] = useState('Medium');
   const [isLoading, setIsLoading] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [itinerary, setItinerary] = useState<AISuggestion[]>([]);
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [isGroupTrip, setIsGroupTrip] = useState(false);
@@ -28,9 +30,19 @@ export default function TripPlannerPage() {
 
   const handleGenerate = async () => {
     setIsLoading(true);
-    const result = await generateItinerary(destination, days, budget, tripDetails);
-    setItinerary(result);
-    setIsLoading(false);
+    setError(null);
+    try {
+      const result = await generateItinerary(destination, days, budget, tripDetails);
+      if (result.length === 0) {
+        setError("Failed to generate itinerary. Please try again or check your configuration.");
+      } else {
+        setItinerary(result);
+      }
+    } catch (err) {
+      setError("An unexpected error occurred while communicating with the AI architect.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSaveTrip = () => {
@@ -54,7 +66,8 @@ export default function TripPlannerPage() {
         status: 'planning'
     };
     addTrip(newTrip);
-    alert('Trip saved to your profile!');
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 3000);
   };
 
   const totalCost = itinerary.reduce((sum, item) => sum + item.estimatedCost, 0);
@@ -197,11 +210,36 @@ export default function TripPlannerPage() {
           <button 
             onClick={handleGenerate}
             disabled={isLoading || !destination}
-            className="w-full py-5 bg-black text-white rounded-2xl font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-luxury-gold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-5 bg-black text-white rounded-2xl font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-luxury-gold transition-all disabled:opacity-50 disabled:cursor-not-allowed mb-4"
           >
             {isLoading ? <Clock className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
             {isLoading ? 'Designing...' : 'Generate Itinerary'}
           </button>
+
+          <AnimatePresence>
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="bg-red-500/10 border border-red-500/20 text-red-600 p-4 rounded-2xl text-[10px] uppercase font-bold tracking-widest flex items-center justify-center gap-2 mb-4"
+              >
+                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                {error}
+              </motion.div>
+            )}
+            {saveSuccess && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="bg-green-500/10 border border-green-500/20 text-green-600 p-4 rounded-2xl text-[10px] uppercase font-bold tracking-widest flex items-center justify-center gap-2"
+              >
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                Trip saved to your profile
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 

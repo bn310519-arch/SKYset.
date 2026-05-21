@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShieldCheck, CreditCard, Plane, Calendar, User, MapPin, CheckCircle2, ChevronRight, ArrowLeft, Hotel, Wallet, Lock, QrCode, Coins, Info, Sparkles, Smartphone, Download, Printer, Share2 } from 'lucide-react';
+import { ShieldCheck, CreditCard, Plane, Calendar, User, MapPin, CheckCircle2, ChevronRight, ArrowLeft, Hotel, Wallet, Lock, QrCode, Coins, Info, Sparkles, Smartphone, Download, Printer, Share2, Clock } from 'lucide-react';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { useStore, Trip } from '../lib/store';
 import html2canvas from 'html2canvas';
@@ -40,10 +40,13 @@ export default function CheckoutPage() {
   const room = searchParams.get('room');
   const nights = parseInt(searchParams.get('nights') || '1');
   const guests = parseInt(searchParams.get('guests') || '1');
+  const tickets = parseInt(searchParams.get('tickets') || '1');
+  const cinema = searchParams.get('cinema');
+  const time = searchParams.get('time');
   const checkIn = searchParams.get('checkIn');
   const checkOut = searchParams.get('checkOut');
   const priceParam = searchParams.get('price');
-  const basePrice = priceParam ? parseFloat(priceParam) : (type === 'hotel' ? 340 : 840);
+  const basePrice = priceParam ? parseFloat(priceParam) : (type === 'hotel' ? 340 : (type === 'movie' ? 15 : 840));
 
   // Simulated booking details
   const getDetails = () => {
@@ -60,12 +63,26 @@ export default function CheckoutPage() {
         icon: <Hotel className="w-6 h-6" />
       };
     }
+    if (type === 'movie') {
+      return {
+        id: id || 'M-007',
+        name: name,
+        type: 'Cinema',
+        location: cinema || 'Premium Cinema',
+        to: time || 'Evening Show',
+        date: 'May 15, 2026',
+        price: basePrice * tickets,
+        class: 'Executive Seating',
+        passenger: 'Elite Member',
+        icon: <QrCode className="w-6 h-6" />
+      };
+    }
     return {
       id: id || 'EK 202',
       name: name,
       type: 'Airline',
-      location: 'BOM',
-      to: 'LHR',
+      location: searchParams.get('location') || 'BOM',
+      to: searchParams.get('to') || 'LHR',
       date: 'May 15, 2026',
       price: basePrice,
       class: 'First Class',
@@ -80,11 +97,14 @@ export default function CheckoutPage() {
     try {
       // For iframes, we often need to ensure focus
       window.focus();
+      
       // Ensure the content is visible
       if (!receiptRef.current) return;
       
-      // Before printing, we might want to temporarily hide other things
-      // though the @media print CSS should handle it.
+      // Scroll to top to avoid potential print clipping issues
+      window.scrollTo(0, 0);
+      
+      // Execute print
       window.print();
     } catch (err) {
       console.error('Print failed:', err);
@@ -99,10 +119,12 @@ export default function CheckoutPage() {
                 <title>Skyset Receipt - ${transactionId}</title>
                 <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
                 <style>
-                  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,900;1,900&display=swap');
+                  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,900;1,900&family=Inter:wght@400;700&display=swap');
                   .luxury-text { font-family: 'Playfair Display', serif; }
-                  body { background: white; padding: 2rem; -webkit-print-color-adjust: exact; }
+                  body { background: white; padding: 2rem; font-family: 'Inter', sans-serif; -webkit-print-color-adjust: exact; }
                   .print\\:hidden { display: none !important; }
+                  table { width: 100%; border-collapse: collapse; }
+                  th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
                 </style>
               </head>
               <body>${printContents}</body>
@@ -113,7 +135,7 @@ export default function CheckoutPage() {
           setTimeout(() => {
             printWindow.print();
             printWindow.close();
-          }, 500);
+          }, 750);
         }
       }
     }
@@ -128,30 +150,35 @@ export default function CheckoutPage() {
       // Ensure images and fonts are loaded
       await document.fonts.ready;
       
-      // We set specific styles to the receipt before capturing
-      const originalStyle = receiptRef.current.style.cssText;
-      receiptRef.current.style.width = '800px'; // Set fixed width for capture consistency
+      // Capture the element using html2canvas
+      const element = receiptRef.current;
       
-      const canvas = await html2canvas(receiptRef.current, {
-        scale: 1,
+      const canvas = await html2canvas(element, {
+        scale: 2, // Higher scale for better quality
         useCORS: true,
         backgroundColor: '#ffffff',
         logging: false,
-        allowTaint: true,
+        allowTaint: false, // Set to false when useCORS is true for better security/compatibility
         onclone: (clonedDoc) => {
           const el = clonedDoc.getElementById('printable-receipt') as HTMLElement;
           if (el) {
             el.style.borderRadius = '0';
             el.style.boxShadow = 'none';
+            // Ensure print:hidden elements are hidden in the clone as well
+            const hiddenEls = el.querySelectorAll('.print\\:hidden');
+            hiddenEls.forEach(item => (item as HTMLElement).style.display = 'none');
           }
         }
       });
       
-      // Restore styles
-      receiptRef.current.style.cssText = originalStyle;
+      const imgData = canvas.toDataURL('image/jpeg', 1.0);
+      const pdf = new jsPDF({
+        orientation: 'p',
+        unit: 'mm',
+        format: 'a4',
+        compress: true
+      });
       
-      const imgData = canvas.toDataURL('image/jpeg', 0.9);
-      const pdf = new jsPDF('p', 'mm', 'a4');
       const imgProps = pdf.getImageProperties(imgData);
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
@@ -160,7 +187,7 @@ export default function CheckoutPage() {
       pdf.save(`Skyset-Receipt-${transactionId}.pdf`);
     } catch (err) {
       console.error('Download failed:', err);
-      setError('Bespoke PDF generation failed. Please try printing to PDF instead.');
+      setError('PDF generation failed. Please try "Print" and select "Save as PDF" instead.');
     } finally {
       setIsGenerating(false);
     }
@@ -316,17 +343,17 @@ export default function CheckoutPage() {
                           <p className="text-[10px] text-black/40">{details.date}</p>
                         </td>
                         <td className="py-6 text-center text-xs font-mono text-black/40">{details.id}</td>
-                        <td className="py-6 text-right text-sm font-bold text-black">{formatPrice(details.price - 90)}</td>
+                        <td className="py-6 text-right text-sm font-bold text-black">{formatPrice(details.price - (type === 'movie' ? 5 : 90))}</td>
                       </tr>
                       <tr>
-                        <td className="py-4 text-xs text-black/40">Luxury Service Fee & Handling</td>
+                        <td className="py-4 text-xs text-black/40">{type === 'movie' ? 'Convenience Fee & Booking Charges' : 'Luxury Service Fee & Handling'}</td>
                         <td className="py-4"></td>
-                        <td className="py-4 text-right text-sm text-black/40">{formatPrice(40)}</td>
+                        <td className="py-4 text-right text-sm text-black/40">{formatPrice(type === 'movie' ? 2 : 40)}</td>
                       </tr>
                       <tr>
-                        <td className="py-4 text-xs text-black/40">Airport Taxes & Regulatory Charges</td>
+                        <td className="py-4 text-xs text-black/40">{type === 'movie' ? 'Entertainment Tax (GST)' : 'Airport Taxes & Regulatory Charges'}</td>
                         <td className="py-4"></td>
-                        <td className="py-4 text-right text-sm text-black/40">{formatPrice(50)}</td>
+                        <td className="py-4 text-right text-sm text-black/40">{formatPrice(type === 'movie' ? 3 : 50)}</td>
                       </tr>
                     </tbody>
                     <tfoot>
@@ -417,7 +444,7 @@ export default function CheckoutPage() {
                 <div className="text-right">
                   <div className="text-2xl font-light text-luxury-gold">{formatPrice(details.price)}</div>
                   <p className="text-[10px] text-black/20 font-bold uppercase tracking-widest mt-1">
-                    {type === 'hotel' ? `${nights} Nights` : 'Single Journey'}
+                    {type === 'hotel' ? `${nights} Nights` : (type === 'movie' ? `${tickets} Tickets` : 'Single Journey')}
                   </p>
                 </div>
               </div>
@@ -425,21 +452,21 @@ export default function CheckoutPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="space-y-2">
                   <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/20">
-                    {type === 'hotel' ? 'Location' : 'Departure'}
+                    {type === 'hotel' ? 'Location' : (type === 'movie' ? 'Cinema' : 'Departure')}
                   </p>
                   <div className="flex items-center gap-2">
-                    {type === 'hotel' ? <MapPin className="w-4 h-4 text-luxury-gold" /> : <Plane className="w-4 h-4 text-luxury-gold" />}
-                    <span className="text-sm font-bold text-black">{details.location} {type !== 'hotel' ? 'Airport' : ''}</span>
+                    {type === 'hotel' ? <MapPin className="w-4 h-4 text-luxury-gold" /> : (type === 'movie' ? <QrCode className="w-4 h-4 text-luxury-gold" /> : <Plane className="w-4 h-4 text-luxury-gold" />)}
+                    <span className="text-sm font-bold text-black">{details.location} {(!['hotel', 'movie'].includes(type || '')) ? 'Airport' : ''}</span>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/20">
-                    {type === 'hotel' ? 'Guests' : 'Arrival'}
+                    {type === 'hotel' ? 'Guests' : (type === 'movie' ? 'Show Time' : 'Arrival')}
                   </p>
                   <div className="flex items-center gap-2">
-                    {type === 'hotel' ? <User className="w-4 h-4 text-luxury-gold" /> : <MapPin className="w-4 h-4 text-luxury-gold" />}
+                    {type === 'hotel' ? <User className="w-4 h-4 text-luxury-gold" /> : (type === 'movie' ? <Clock className="w-4 h-4 text-luxury-gold" /> : <MapPin className="w-4 h-4 text-luxury-gold" />)}
                     <span className="text-sm font-bold text-black">
-                        {type === 'hotel' ? `${guests} Guests` : `${details.to} Airport`}
+                        {type === 'hotel' ? `${guests} Guests` : (type === 'movie' ? details.to : `${details.to} Airport`)}
                     </span>
                   </div>
                 </div>
@@ -661,16 +688,16 @@ export default function CheckoutPage() {
             
             <div className="space-y-6 mb-10">
               <div className="flex justify-between items-center pb-4 border-b border-white/10">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">Base Fare</span>
-                <span className="text-sm font-light">{formatPrice(details.price - 90)}</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">{type === 'movie' ? 'Ticket Price' : 'Base Fare'}</span>
+                <span className="text-sm font-light">{formatPrice(details.price - (type === 'movie' ? 5 : 90))}</span>
               </div>
               <div className="flex justify-between items-center pb-4 border-b border-white/10">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">Airport Taxes</span>
-                <span className="text-sm font-light">{formatPrice(50)}</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">{type === 'movie' ? 'Cinema Tax' : 'Airport Taxes'}</span>
+                <span className="text-sm font-light">{formatPrice(type === 'movie' ? 3 : 50)}</span>
               </div>
               <div className="flex justify-between items-center pb-4 border-b border-white/10">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">Luxury Service</span>
-                <span className="text-sm font-light">{formatPrice(40)}</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">{type === 'movie' ? 'Service Fee' : 'Luxury Service'}</span>
+                <span className="text-sm font-light">{formatPrice(type === 'movie' ? 2 : 40)}</span>
               </div>
               
               <div className="pt-4">

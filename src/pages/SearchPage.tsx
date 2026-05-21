@@ -11,6 +11,19 @@ const LOCATIONS = [
   'Mumbai (BOM), India',
   'New Delhi (DEL), India',
   'Bengaluru (BLR), India',
+  'Mysuru (MYQ), India',
+  'Hampi, India',
+  'Coorg (Kodagu), India',
+  'Chikmagalur, India',
+  'Gokarna, India',
+  'Udupi, India',
+  'Badami, India',
+  'Jog Falls, India',
+  'Mangaluru (IXE), India',
+  'Kabini, India',
+  'Bandipur, India',
+  'Murudeshwar, India',
+  'Honnavara, India',
   'Chennai (MAA), India',
   'Hyderabad (HYD), India',
   'Kolkata (CCU), India',
@@ -35,8 +48,6 @@ const LOCATIONS = [
   'Surat (STV), India',
   'Nagpur (NAG), India',
   'Vadodara (BDQ), India',
-  'Rajkot (RAJ), India',
-  'Mangaluru (IXE), India',
   'Kozhikode (CCJ), India',
   'Kannur (CNN), India',
   'Madurai (IXM), India',
@@ -200,15 +211,23 @@ const LOCATIONS = [
   'Lagos (LOS), Nigeria'
 ];
 
-function LocationInput({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder: string }) {
+function LocationInput({ label, value, onChange, placeholder, activeTab }: { label: string; value: string; onChange: (v: string) => void; placeholder: string; activeTab?: string }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const fuse = useMemo(() => new Fuse(LOCATIONS, {
-    threshold: 0.4,
-    distance: 100,
-  }), []);
+  const fuse = useMemo(() => {
+    let list = LOCATIONS;
+    if (activeTab === 'flights') {
+      // Filter for locations with airport codes (IATA)
+      // and explicitly exclude Honnavara just in case regex doesn't catch all variations
+      list = LOCATIONS.filter(l => /\([A-Z]{3}\)/.test(l) && !l.toLowerCase().includes('honnavara'));
+    }
+    return new Fuse(list, {
+      threshold: 0.4,
+      distance: 100,
+    });
+  }, [activeTab]);
 
   useEffect(() => {
     if (value.length >= 1) {
@@ -233,8 +252,77 @@ function LocationInput({ label, value, onChange, placeholder }: { label: string;
   }, []);
 
   const getCityPhoto = (name: string) => {
-    const city = name.split(' (')[0];
-    return `https://images.unsplash.com/photo-1500835595561-82a0c6499f5a?auto=format&fit=crop&q=80&w=100&h=100&sig=${city}`;
+    const city = name.split(' (')[0].toLowerCase();
+    const cityIdMap: Record<string, string> = {
+      'mumbai': 'photo-1529253355930-ddbe423a2ac7',
+      'new delhi': 'photo-1587474260584-136574528ed5',
+      'delhi': 'photo-1587474260584-136574528ed5',
+      'bengaluru': 'photo-1596761301586-599127837ae3',
+      'bangalore': 'photo-1596761301586-599127837ae3',
+      'london': 'photo-1513635269975-59663e0ac1ad',
+      'paris': 'photo-1502602898657-3e91760cbb34',
+      'new york': 'photo-1496442226666-8d4d0e62e6e9',
+      'dubai': 'photo-1518684079-3c830dcef090',
+      'singapore': 'photo-1525625230556-8e8dc4486660',
+      'tokyo': 'photo-1540959733332-eab4deabeeaf',
+      'sydney': 'photo-1506973035872-a4ec16b8e8d9',
+      'goa': 'photo-1512343879784-a960bf40e7f2',
+      'hampi': 'photo-1581333100576-b73bbe79a05f',
+      'gokarna': 'photo-1512343879784-a960bf40e7f2',
+      'mysore': 'photo-1621021481146-f9479b1df0da',
+      'mysuru': 'photo-1621021481146-f9479b1df0da',
+      'chikmagalur': 'photo-1600100397608-f40078eb076a',
+      'mahabaleshwar': 'photo-1603511110022-7cd508e317c7',
+      'coorg': 'photo-1636124795773-6987747e9282',
+      'kabini': 'photo-1591942001358-132d9dbd7675',
+      'bandipur': 'photo-1604537466158-719b1972edd8',
+      'honnavara': 'photo-1616239775080-60b73059437b',
+      'kochi': 'photo-1590603784197-cc623f958a0e',
+      'madurai': 'photo-1590050734360-1e55099ae56b',
+      'surat': 'photo-1591873117495-219a1de81561',
+      'mangalore': 'photo-1596436889106-be35e843f9b4',
+      'mangaluru': 'photo-1596436889106-be35e843f9b4',
+      'chennai': 'photo-1582510003544-4d00b7f7405a',
+      'hyderabad': 'photo-1626339661816-a13a07344a21',
+      'kolkata': 'photo-1558431382-bb7b68c4b55d',
+      'ahmedabad': 'photo-1599341626413-98788c894c58',
+      'jaipur': 'photo-1599661046289-e31887846e11',
+      'pune': 'photo-1562778612-e1e0cda9915c',
+      'lucknow': 'photo-1583146395624-39515748a43c',
+      'varanasi': 'photo-1561361513-2d000a5d1d42',
+      'amritsar': 'photo-1588127333419-b9d7de223dcf',
+      'udaipur': 'photo-1596436889106-be35e843f9b4',
+      'jodhpur': 'photo-1477587458883-47125ee1803f',
+      'leh': 'photo-1594950165538-422956cf0103',
+      'panaji': 'photo-1512343879784-a960bf40e7f2',
+      'shirdi': 'photo-1510414842594-a61c69b5ae57',
+      'chandigarh': 'photo-1616142106263-bd44c0175027',
+      'guwahati': 'photo-1588414734732-660b07304ddb',
+      'thiruvananthapuram': 'photo-1585822700812-789a7f3408a0',
+      'bali': 'photo-1537996194471-e657df975ab4',
+      'hong kong': 'photo-1507450491953-d14785462c45',
+      'malé': 'photo-1514282401347-d1f67f7242bb',
+      'cairo': 'photo-1503177119275-0aa32b3a9368',
+      'cape town': 'photo-1516426122078-c23e76319801',
+      'barcelona': 'photo-1583997051651-8518cf4b144e',
+      'madrid': 'photo-1539037116277-4db20889f2d4',
+      'berlin': 'photo-1560969184-10fe8719e047',
+      'amsterdam': 'photo-1512470876302-972fad2aa9dd',
+      'zurich': 'photo-1515488764276-beab7607c1e6',
+      'athens': 'photo-1542314831-068cd1dbfeeb',
+      'istanbul': 'photo-1524231757912-21f4fe3a7200',
+      'venice': 'photo-1523906834658-6e24ef23a67e',
+      'florence': 'photo-1504109586057-7a2ae83d1338',
+      'rome': 'photo-1552832230-c0197dd311b5',
+      'san francisco': 'photo-1501594907352-04cda38ebc29',
+      'los angeles': 'photo-1534190239940-9a4c9c656a42',
+      'chicago': 'photo-1494522855154-9297ac051bb5'
+    };
+    
+    // Find matching key
+    const match = Object.keys(cityIdMap).find(k => city.includes(k));
+    const photoId = match ? cityIdMap[match] : 'photo-1488646953014-85cb44e25828';
+    return `https://images.unsplash.com/${photoId}?auto=format&fit=crop&q=80&w=100&h=100`;
   };
 
   return (
@@ -259,9 +347,9 @@ function LocationInput({ label, value, onChange, placeholder }: { label: string;
             exit={{ opacity: 0, y: 10 }}
             className="absolute z-50 left-0 right-0 top-full mt-2 bg-white/95 backdrop-blur-xl rounded-2xl border border-black/10 shadow-2xl overflow-hidden max-h-80 overflow-y-auto"
           >
-            {suggestions.map(s => (
+            {suggestions.map((s, idx) => (
               <button 
-                key={s}
+                key={`${s}-${idx}`}
                 onClick={() => {
                   onChange(s);
                   setShowSuggestions(false);
@@ -269,7 +357,15 @@ function LocationInput({ label, value, onChange, placeholder }: { label: string;
                 className="w-full p-3 text-left hover:bg-black/5 transition-colors border-b border-black/5 last:border-0 flex items-center gap-3 group"
               >
                 <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-black/5">
-                  <img src={getCityPhoto(s)} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" alt={s} referrerPolicy="no-referrer" />
+                  <img 
+                    src={getCityPhoto(s)} 
+                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" 
+                    alt={s} 
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&q=80&w=100&h=100';
+                    }}
+                  />
                 </div>
                 <div className="flex-grow">
                   <div className="text-xs font-bold text-black uppercase tracking-tight">{s.split(' (')[0]}</div>
@@ -345,6 +441,7 @@ export default function SearchPage() {
   const [activeTab, setActiveTab] = useState<'flights' | 'hotels' | 'activities' | 'movies'>(
     initialTab && ['flights', 'hotels', 'activities', 'movies'].includes(initialTab) ? (initialTab as any) : 'flights'
   );
+
   const [isUpdating, setIsUpdating] = useState(false);
   const [lastSearchTime, setLastSearchTime] = useState<string | null>(null);
 
@@ -413,7 +510,10 @@ export default function SearchPage() {
     { id: 'EK 204', airline: 'Emirates', from: fromLocation.split(',')[0], to: toLocation.split(',')[0], time: '16:45', price: 650, status: 'On Time', gate: 'A15', stops: 0, departureSlot: 'afternoon', class: 'economy' },
   ];
 
-  const filteredFlights = flights.filter(f => {
+  const destinationHasAirport = /\([A-Z]{3}\)/.test(toLocation);
+  const originHasAirport = /\([A-Z]{3}\)/.test(fromLocation);
+
+  const filteredFlights = (!destinationHasAirport || !originHasAirport) ? [] : flights.filter(f => {
     if (flightStops !== 'all') {
       if (flightStops === '0' && f.stops !== 0) return false;
       if (flightStops === '1' && f.stops !== 1) return false;
@@ -504,11 +604,11 @@ export default function SearchPage() {
             animate={{ opacity: 1, y: 0 }}
             className="glass-panel p-4 rounded-[2rem] flex flex-col md:flex-row items-center gap-4 bg-white/95 shadow-xl border border-black/5 relative z-20"
           >
-            <LocationInput label="Origin" value={fromLocation} onChange={setFromLocation} placeholder="City or Airport" />
+            <LocationInput label="Origin" value={fromLocation} onChange={setFromLocation} placeholder="City or Airport" activeTab={activeTab} />
             <div className="p-3 bg-black/5 rounded-full mt-4 md:mt-6 shrink-0">
               <ArrowRightLeft className="w-4 h-4 text-black/40" />
             </div>
-            <LocationInput label="Destination" value={toLocation} onChange={setToLocation} placeholder="City or Airport" />
+            <LocationInput label="Destination" value={toLocation} onChange={setToLocation} placeholder="City or Airport" activeTab={activeTab} />
             <div className="md:w-px h-12 bg-black/5 mx-2 hidden md:block mt-6 shrink-0" />
             
             <div className="flex-grow w-full md:w-auto flex flex-col md:flex-row items-center gap-4">
@@ -946,18 +1046,33 @@ export default function SearchPage() {
               ))
             ) : activeTab === 'flights' ? (
               <div className="p-20 text-center bg-black/5 rounded-[3rem] border border-dashed border-black/10">
-                <p className="text-sm text-black/40 font-bold uppercase tracking-widest">No flights found matching your selection</p>
-                <button 
-                  onClick={() => {
-                    setFlightStops('all');
-                    setSelectedAirlines([]);
-                    setTimeSlot('all');
-                    setCabinClass('all');
-                  }}
-                  className="mt-6 text-xs text-luxury-gold hover:text-black font-bold uppercase tracking-widest transition-colors"
-                >
-                  Reset all filters
-                </button>
+                {!destinationHasAirport || !originHasAirport ? (
+                  <div className="space-y-4">
+                    <div className="w-16 h-16 bg-black/5 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <AlertCircle className="w-8 h-8 text-luxury-gold" />
+                    </div>
+                    <p className="text-sm text-black font-bold uppercase tracking-widest">No direct airport match found</p>
+                    <p className="text-[10px] text-black/40 font-medium max-w-xs mx-auto leading-relaxed">
+                      Skyset's premier flight network requires standardized IATA airport codes. 
+                      Please select a location from our verified partner airports (e.g., London (LHR)).
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm text-black/40 font-bold uppercase tracking-widest">No flights found matching your selection</p>
+                    <button 
+                      onClick={() => {
+                        setFlightStops('all');
+                        setSelectedAirlines([]);
+                        setTimeSlot('all');
+                        setCabinClass('all');
+                      }}
+                      className="mt-6 text-xs text-luxury-gold hover:text-black font-bold uppercase tracking-widest transition-colors"
+                    >
+                      Reset all filters
+                    </button>
+                  </>
+                )}
               </div>
             ) : null}
             {activeTab === 'hotels' && (
@@ -998,13 +1113,21 @@ export default function SearchPage() {
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-luxury-gold via-black to-luxury-gold opacity-30" />
                 
                 <div className="flex items-center justify-between mb-8">
-                    <h3 className="luxury-text text-2xl text-black">Market <span className="italic text-luxury-gold">Insight</span></h3>
-                    <TrendingUp className="w-5 h-5 text-luxury-gold" />
+                    <div>
+                        <h3 className="luxury-text text-2xl text-black">Market <span className="italic text-luxury-gold">Insight</span></h3>
+                        <div className="flex items-center gap-1.5 mt-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                            <span className="text-[8px] font-bold uppercase tracking-widest text-black/30">Live Market Feed</span>
+                        </div>
+                    </div>
+                    <div className="p-3 bg-luxury-gold/10 rounded-2xl">
+                        <TrendingUp className="w-5 h-5 text-luxury-gold" />
+                    </div>
                 </div>
 
                 <div className="h-44 flex items-end gap-2.5 mb-8 px-2">
                     {[45, 75, 55, 95, 70, 85, 60].map((h, i) => (
-                        <div key={i} className="flex-grow bg-black/5 rounded-full group/bar relative">
+                        <div key={i} className="flex-grow h-full bg-black/5 rounded-full group/bar relative">
                             <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 bg-black text-white text-[9px] font-bold px-2 py-1 rounded-lg opacity-0 group-hover/bar:opacity-100 transition-all scale-75 group-hover/bar:scale-100 pointer-events-none z-10 shadow-xl">
                                 {formatPrice(h * 850)}
                             </div>
@@ -1012,7 +1135,7 @@ export default function SearchPage() {
                                 initial={{ height: 0 }}
                                 animate={{ height: `${h}%` }}
                                 transition={{ duration: 1, delay: i * 0.1 }}
-                                className={`w-full rounded-full transition-all duration-700 ${i === 3 ? 'bg-luxury-gold shadow-[0_0_20px_rgba(212,175,55,0.4)]' : 'bg-black/10 group-hover/bar:bg-black/20'}`} 
+                                className={`w-full rounded-full absolute bottom-0 transition-all duration-700 ${i === 3 ? 'bg-luxury-gold shadow-[0_0_20px_rgba(212,175,55,0.4)]' : 'bg-black/10 group-hover/bar:bg-black/20'}`} 
                             />
                         </div>
                     ))}
@@ -1416,14 +1539,15 @@ const FlightCard: React.FC<{ flight: any }> = ({ flight }) => {
       <div className="absolute top-0 right-0 w-32 h-32 bg-luxury-gold/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700" />
       
       <div className="flex items-center gap-6 min-w-[200px] shrink-0 relative z-10">
-        <div className="h-14 w-14 bg-black/5 flex items-center justify-center rounded-2xl overflow-hidden shrink-0 border border-black/5">
+        <div className="h-16 w-16 bg-black/5 flex items-center justify-center rounded-2xl overflow-hidden shrink-0 border border-black/5 p-3 flex-col bg-gradient-to-br from-white to-black/5">
            <img 
-            src={`https://logo.clearbit.com/${flight.airline.toLowerCase().replace(' ', '')}.com`} 
+            src={`https://www.google.com/s2/favicons?domain=${flight.airline.toLowerCase().includes('singapore') ? 'singaporeair.com' : flight.airline.toLowerCase().includes('qatar') ? 'qatarairways.com' : flight.airline.toLowerCase().includes('emirates') ? 'emirates.com' : flight.airline.toLowerCase().replace(/\s+/g, '') + '.com'}&sz=128`} 
             alt={flight.airline}
-            className="w-10 h-10 object-contain"
+            className="w-full h-full object-contain drop-shadow-sm"
             onError={(e) => {
-              (e.target as HTMLImageElement).src = 'https://img.icons8.com/ios-filled/50/luxury.png';
+              (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(flight.airline)}&background=D4AF37&color=fff&bold=true&font-size=0.4`;
             }}
+            referrerPolicy="no-referrer"
            />
         </div>
         <div className="overflow-hidden">
@@ -1498,7 +1622,7 @@ const HOTEL_DATA = [
     city: 'Tokyo',
     price: 950, 
     rating: 5.0, 
-    image: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=800',
+    image: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?q=80&w=800',
     description: 'A sanctuary atop the Otemachi Tower, blending traditional Japanese design with modern luxury.',
     amenities: ['wifi', 'pool', 'gym', 'spa', 'butler'],
     location: 'Otemachi'
@@ -1511,7 +1635,7 @@ const HOTEL_DATA = [
     city: 'Bengaluru',
     price: 280, 
     rating: 4.9, 
-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=800',
+    image: 'https://images.unsplash.com/photo-1590089415225-401ed6f9db8e?q=80&w=800',
     description: 'A majestic palace hotel inspired by the Royal Palace of Mysore, set in nine acres of lush gardens.',
     amenities: ['wifi', 'pool', 'gym', 'spa', 'butler'],
     location: 'Old Airport Road'
@@ -1524,7 +1648,7 @@ const HOTEL_DATA = [
     city: 'Bengaluru',
     price: 220, 
     rating: 4.8, 
-    image: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=800',
+    image: 'https://images.unsplash.com/photo-1582719471384-894fbb16e074?q=80&w=800',
     description: 'A tribute to the Garden City of Bengaluru, this hotel is a masterpiece of sustainable luxury.',
     amenities: ['wifi', 'pool', 'gym', 'spa', 'lounge'],
     location: 'Residency Road'
@@ -1537,7 +1661,7 @@ const HOTEL_DATA = [
     city: 'Mangalore',
     price: 120, 
     rating: 4.5, 
-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=800',
+    image: 'https://images.unsplash.com/photo-1582719471384-894fbb16e074?q=80&w=800',
     description: 'Overlooking the confluence of the Gurupura and Netravathi rivers and the Arabian Sea.',
     amenities: ['wifi', 'pool', 'gym', 'restaurant'],
     location: 'Old Port Road'
@@ -1550,7 +1674,7 @@ const HOTEL_DATA = [
     city: 'Hassan',
     price: 150, 
     rating: 4.7, 
-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=800',
+    image: 'https://images.unsplash.com/photo-1549294413-26f195200c16?q=80&w=800',
     description: 'Experience the rustic charm of Malnad coupled with the legendary Hoysala hospitality.',
     amenities: ['pool', 'nature-walk', 'spa', 'traditional-cuisine'],
     location: 'Belur Road'
@@ -1563,7 +1687,7 @@ const HOTEL_DATA = [
     city: 'Bengaluru',
     price: 350, 
     rating: 4.9, 
-    image: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=800',
+    image: 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?q=80&w=800',
     description: 'A lush sanctuary in the heart of the city, with over 130 years of history and charm.',
     amenities: ['wifi', 'pool', 'gym', 'spa', 'historic-tours'],
     location: 'Race Course Road'
@@ -1576,7 +1700,7 @@ const HOTEL_DATA = [
     city: 'Male',
     price: 820, 
     rating: 4.8, 
-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=800',
+    image: 'https://images.unsplash.com/photo-1514282401347-d1f67f7242bb?q=80&w=800',
     description: 'A secluded paradise offering overwater bungalows and world-class diving in the Landaa Giraavaru.',
     amenities: ['wifi', 'pool', 'beach', 'spa', 'all-inclusive'],
     location: 'Landaa Giraavaru'
@@ -1602,7 +1726,7 @@ const HOTEL_DATA = [
     city: 'Venice',
     price: 750, 
     rating: 4.9, 
-    image: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=800',
+    image: 'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?q=80&w=800',
     description: 'The legendary Venice retreat where glamorous service meets iconic lagoon views.',
     amenities: ['wifi', 'pool', 'gym', 'michelin-star', 'butler', 'boat-transfer'],
     location: 'Giudecca Island'
@@ -1745,7 +1869,7 @@ const HOTEL_DATA = [
     city: 'Sydney',
     price: 980, 
     rating: 4.8, 
-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=800',
+    image: 'https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?q=80&w=800',
     description: 'Perfectly positioned between the Sydney Opera House and Harbour Bridge.',
     amenities: ['wifi', 'pool', 'gym', 'view', 'butler'],
     location: 'The Rocks'
@@ -1758,7 +1882,7 @@ const HOTEL_DATA = [
     city: 'Cape Town',
     price: 1100, 
     rating: 4.9, 
-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=800',
+    image: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?q=80&w=800',
     description: 'A magical space towering above the V&A Waterfront, housed in a historic grain silo.',
     amenities: ['wifi', 'pool', 'spa', 'gallery', 'view'],
     location: 'V&A Waterfront'
@@ -1797,7 +1921,7 @@ const HOTEL_DATA = [
     city: 'Mexico City',
     price: 520, 
     rating: 4.7, 
-    image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=800',
+    image: 'https://images.unsplash.com/photo-1518105779142-d975f22f1b0a?q=80&w=800',
     description: 'Elevated luxury on Paseo de la Reforma, blending historic charm with modern service.',
     amenities: ['wifi', 'pool', 'butler', 'spa', 'conference'],
     location: 'Paseo de la Reforma'
@@ -1810,7 +1934,7 @@ const HOTEL_DATA = [
     city: 'Marrakech',
     price: 1400, 
     rating: 5.0, 
-    image: 'https://images.unsplash.com/photo-1596436889106-be35e843f9b4?q=80&w=800',
+    image: 'https://images.unsplash.com/photo-1539020140153-e479b8c22e70?q=80&w=800',
     description: 'A masterpiece of Moroccan architecture, where guests reside in their own private riads.',
     amenities: ['wifi', 'pool', 'spa', 'butler', 'garden'],
     location: 'Medina'
@@ -1849,7 +1973,7 @@ const HOTEL_DATA = [
     city: 'Maldives',
     price: 2200, 
     rating: 5.0, 
-    image: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=800',
+    image: 'https://images.unsplash.com/photo-1537061611090-ffb8612760c9?q=80&w=800',
     description: 'Ultra-luxury overwater villas with retractable roofs for stargazing.',
     amenities: ['wifi', 'pool', 'spa', 'cinema', 'astronomy'],
     location: 'Noonu Atoll'
@@ -1862,7 +1986,7 @@ const HOTEL_DATA = [
     city: 'St. Moritz',
     price: 890, 
     rating: 4.9, 
-    image: 'https://images.unsplash.com/photo-1551882547-ff43c6163745?q=80&w=800',
+    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=800',
     description: 'The historic landmark in the center of St. Moritz, synonymous with Swiss luxury.',
     amenities: ['wifi', 'pool', 'spa', 'skiing', 'butler'],
     location: 'Swiss Alps'
@@ -1914,7 +2038,7 @@ const HOTEL_DATA = [
     city: 'Coorg',
     price: 420, 
     rating: 4.9, 
-    image: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?q=80&w=800',
+    image: 'https://images.unsplash.com/photo-1628172965415-322197e44ca6?q=80&w=800',
     description: 'Perched 4000 feet above sea level in a 180-acre rainforest, offering tranquility amidst the Western Ghats.',
     amenities: ['wifi', 'pool', 'spa', 'hiking', 'nature-walk', 'organic-dining'],
     location: 'Monnangeri'
@@ -2087,6 +2211,149 @@ const HOTEL_DATA = [
     description: 'Experience Asian-inspired hospitality with the citys best panoramic views from the 18th floor.',
     amenities: ['wifi', 'pool', 'spa', 'sky-bar', 'gym', 'chinese-dining'],
     location: 'Palace Road'
+  },
+  {
+    id: 106,
+    type: 'highly-rated',
+    name: 'Evolve Back, Hampi',
+    chain: 'Evolve Back',
+    city: 'Hampi',
+    price: 450,
+    rating: 5.0,
+    image: 'https://images.unsplash.com/photo-1544070078-a212eda27b49?q=80&w=800',
+    description: 'A regal resort inspired by the 14th-century Vijayanagara Empire architecture.',
+    amenities: ['wifi', 'pool', 'spa', 'heritage-walk', 'private-dining'],
+    location: 'Kamalapura'
+  },
+  {
+    id: 107,
+    type: 'resort',
+    name: 'The Tamara Coorg',
+    chain: 'Independent',
+    city: 'Coorg',
+    price: 320,
+    rating: 4.9,
+    image: 'https://images.unsplash.com/photo-1636124795773-6987747e9282?q=80&w=800',
+    description: 'A unique luxury stay perched on the lush slopes of a coffee plantation.',
+    amenities: ['wifi', 'pool', 'trekking', 'spa', 'nature-walk'],
+    location: 'Yevakapadi'
+  },
+  {
+    id: 108,
+    type: 'highly-rated',
+    name: 'Grand Mercure Mysore',
+    chain: 'Accor',
+    city: 'Mysuru',
+    price: 180,
+    rating: 4.7,
+    image: 'https://images.unsplash.com/photo-1621021481146-f9479b1df0da?q=80&w=800',
+    description: 'Celebrate the royal heritage of Mysore with world-class French hospitality.',
+    amenities: ['wifi', 'pool', 'gym', 'rooftop-lounge', 'spa'],
+    location: 'Nelson Mandela Road'
+  },
+  {
+    id: 109,
+    type: 'resort',
+    name: 'The Postcard on the Arabian Sea',
+    chain: 'The Postcard',
+    city: 'Udupi',
+    price: 280,
+    rating: 4.8,
+    image: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?q=80&w=800',
+    description: 'An intimate coastal sanctuary where the sound of the waves is your soundtrack.',
+    amenities: ['wifi', 'pool', 'beach-access', 'ayurvedic-spa', 'local-cuisine'],
+    location: 'Maravanthe'
+  },
+  {
+    id: 110,
+    type: 'highly-rated',
+    name: 'The Serai Chikmagalur',
+    chain: 'Independent',
+    city: 'Chikmagalur',
+    price: 350,
+    rating: 4.9,
+    image: 'https://images.unsplash.com/photo-1600100397608-f40078eb076a?q=80&w=800',
+    description: 'Luxury villas nestled in the heart of India\'s finest coffee destination.',
+    amenities: ['wifi', 'private-pool', 'spa', 'plantation-tour', 'gym'],
+    location: 'Mugthihalli'
+  },
+  {
+    id: 111,
+    type: 'highly-rated',
+    name: 'The Bison Resort',
+    chain: 'Independent',
+    city: 'Kabini',
+    price: 400,
+    rating: 4.9,
+    image: 'https://images.unsplash.com/photo-1591942001358-132d9dbd7675?q=80&w=800',
+    description: 'An African-style luxury tented camp overlooking the Kabini backwaters and forest.',
+    amenities: ['safari', 'pool', 'outdoor-dining', 'nature-walk', 'boat-safari'],
+    location: 'Karapura'
+  },
+  {
+    id: 112,
+    type: 'highly-rated',
+    name: 'The Postcard, Dewa - Thiba',
+    chain: 'The Postcard',
+    city: 'Hassan',
+    price: 320,
+    rating: 4.9,
+    image: 'https://images.unsplash.com/photo-1563293750-2c9680b512b2?q=80&w=800',
+    description: 'A boutique retreat in the hills of Sakleshpur, surrounded by mist-covered peaks.',
+    amenities: ['wifi', 'pool', 'trekking', 'spa', 'bird-watching'],
+    location: 'Sakleshpur'
+  },
+  {
+    id: 113,
+    type: 'highly-rated',
+    name: 'Heritage Resort Hampi',
+    chain: 'Independent',
+    city: 'Hampi',
+    price: 260,
+    rating: 4.8,
+    image: 'https://images.unsplash.com/photo-1506461883276-594a12b11cf3?q=80&w=800',
+    description: 'An eco-friendly resort that captures the spirit of the ancient ruins.',
+    amenities: ['wifi', 'pool', 'spa', 'organic-farm', 'cycling'],
+    location: 'Hosapete'
+  },
+  {
+    id: 114,
+    type: 'highly-rated',
+    name: 'Areca County Resort',
+    chain: 'Independent',
+    city: 'Honnavara',
+    price: 180,
+    rating: 4.8,
+    image: 'https://images.unsplash.com/photo-1616239775080-60b73059437b?q=80&w=800',
+    description: 'A serene heritage retreat set amidst lush areca nut plantations and coastal breeze.',
+    amenities: ['wifi', 'pool', 'nature-walk', 'traditional-cuisine', 'cycling'],
+    location: 'Gundibala'
+  },
+  {
+    id: 115,
+    type: 'highly-rated',
+    name: 'Serai Bandipur',
+    chain: 'Independent',
+    city: 'Bandipur',
+    price: 380,
+    rating: 4.9,
+    image: 'https://images.unsplash.com/photo-1604537466158-719b1972edd8?q=80&w=800',
+    description: 'A majestic jungle resort at the edge of the Bandipur Tiger Reserve.',
+    amenities: ['safari', 'pool', 'spa', 'nature-walk', 'bonfire'],
+    location: 'Bandipur Road'
+  },
+  {
+    id: 116,
+    type: 'resort',
+    name: 'RNS Residency Murudeshwar',
+    chain: 'Independent',
+    city: 'Murudeshwar',
+    price: 150,
+    rating: 4.5,
+    image: 'https://images.unsplash.com/photo-1590050734360-1e55099ae56b?q=80&w=800',
+    description: 'Breathtaking sea views and proximity to the world\'s second-tallest Shiva statue.',
+    amenities: ['wifi', 'pool', 'beach-view', 'temple-access', 'scuba-diving'],
+    location: 'Bhatkal'
   }
 ];
 
@@ -2119,7 +2386,7 @@ const ACTIVITY_DATA = [
     city: 'Bengaluru',
     price: 25,
     rating: 4.9,
-    image: 'https://images.unsplash.com/photo-1590732487082-6a1024214740?q=80&w=800',
+    image: 'https://images.unsplash.com/photo-1596761301586-599127837ae3?q=80&w=800',
     description: 'Explore the Tudor-style architecture and royal histories of the Bangalore Palace.',
     type: 'culture',
     location: 'Vasanth Nagar'
@@ -2130,7 +2397,7 @@ const ACTIVITY_DATA = [
     city: 'Paris',
     price: 250,
     rating: 5.0,
-    image: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?q=80&w=800',
+    image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=800',
     description: 'An exclusive after-hours journey through the worlds most famous museum.',
     type: 'culture',
     location: '1st Arrond.'
@@ -2152,7 +2419,7 @@ const ACTIVITY_DATA = [
     city: 'Tokyo',
     price: 120,
     rating: 4.9,
-    image: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=800',
+    image: 'https://images.unsplash.com/photo-1526958016901-f050ceb0e50f?q=80&w=800',
     description: 'A rare glimpse into the disciplined world of Sumo at an authentic stable.',
     type: 'culture',
     location: 'Ryogoku'
@@ -2174,7 +2441,7 @@ const ACTIVITY_DATA = [
     city: 'Dubai',
     price: 500,
     rating: 4.9,
-    image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=800',
+    image: 'https://images.unsplash.com/photo-1551323381-807d8536ac9f?q=80&w=800',
     description: 'Luxury cruising around the Palm Jumeirah with premium refreshments.',
     type: 'adventure',
     location: 'Dubai Marina'
@@ -2244,6 +2511,105 @@ const ACTIVITY_DATA = [
     description: 'Early morning entry to the Sistine Chapel before the crowds arrive.',
     type: 'culture',
     location: 'Prati'
+  },
+  {
+    id: 15,
+    name: 'Hampi Coracle & Sunset Hike',
+    city: 'Hampi',
+    price: 20,
+    rating: 4.9,
+    image: 'https://images.unsplash.com/photo-1620762413725-b4618c7ed7d2?q=80&w=800',
+    description: 'Cross the Tungabhadra in a traditional coracle and hike to Matanga Hill for an epic sunset.',
+    type: 'adventure',
+    location: 'Hampi Island'
+  },
+  {
+    id: 16,
+    name: 'Mysore Palace by Night',
+    city: 'Mysuru',
+    price: 15,
+    rating: 4.8,
+    image: 'https://images.unsplash.com/photo-1621021481146-f9479b1df0da?q=80&w=800',
+    description: 'Witness the breathtaking illumination of 97,000 bulbs as the royal palace glows in the night.',
+    type: 'culture',
+    location: 'Agrahara'
+  },
+  {
+    id: 17,
+    name: 'Kudle Beach Trek to Om Beach',
+    city: 'Gokarna',
+    price: 10,
+    rating: 4.7,
+    image: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?q=80&w=800',
+    description: 'A scenic coastline hop across five legendary beaches with hidden cliff viewpoints.',
+    type: 'adventure',
+    location: 'Kudle Beach'
+  },
+  {
+    id: 18,
+    name: 'Jog Falls Rainbow Trek',
+    city: 'Jog Falls',
+    price: 12,
+    rating: 4.6,
+    image: 'https://images.unsplash.com/photo-1603262110263-fb0112e73756?q=80&w=800',
+    description: 'Hike to the bottom of India\'s second-highest plunge waterfall for a refreshing mist bath.',
+    type: 'adventure',
+    location: 'Sagara'
+  },
+  {
+    id: 19,
+    name: 'Kabini Jungle Safari',
+    city: 'Kabini',
+    price: 60,
+    rating: 5.0,
+    image: 'https://images.unsplash.com/photo-1591942001358-132d9dbd7675?q=80&w=800',
+    description: 'Venture into the Nagarahole National Park to spot tigers, panthers, and Asiatic elephants.',
+    type: 'adventure',
+    location: 'Karapura'
+  },
+  {
+    id: 20,
+    name: 'Beluru & Halebidu Heritage Tour',
+    city: 'Hassan',
+    price: 35,
+    rating: 4.9,
+    image: 'https://images.unsplash.com/photo-1572365283594-c48f2f2ac6c0?q=80&w=800',
+    description: 'Explore the intricate stone carvings of the Hoysala dynasty in these world-famous temples.',
+    type: 'culture',
+    location: 'Belur'
+  },
+  {
+    id: 21,
+    name: 'Mangrove Backwater Boat Cruise',
+    city: 'Honnavara',
+    price: 15,
+    rating: 4.9,
+    image: 'https://images.unsplash.com/photo-1616239775080-60b73059437b?q=80&w=800',
+    description: 'Glide through the longest mangrove boardwalk in Karnataka and witness untouched coastal biodiversity.',
+    type: 'adventure',
+    location: 'Sharavathi River'
+  },
+  {
+    id: 22,
+    name: 'Scuba Diving at Netrani Island',
+    city: 'Murudeshwar',
+    price: 60,
+    rating: 4.8,
+    image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?q=80&w=800',
+    description: 'Dive into the "Pigeon Island" of Karnataka for a spectacular coral reef experience.',
+    type: 'adventure',
+    location: 'Netrani Island'
+  },
+  {
+    id: 23,
+    name: 'Rainforest Trek & King Cobra Discovery',
+    city: 'Agumbe',
+    price: 25,
+    rating: 4.7,
+    image: 'https://images.unsplash.com/photo-1582201942981-d3e72ec504c3?q=80&w=800',
+    description: 'Explore the "Cherrapunji of the South" with expert naturalists in the dense Western Ghats.',
+    type: 'adventure',
+    location: 'Agumbe Rainforest'
   }
 ];
 
@@ -2254,7 +2620,7 @@ const MOVIE_DATA = [
     genre: 'Sci-Fi / Adventure',
     city: 'Bengaluru',
     rating: 4.9,
-    image: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=800',
+    image: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=800',
     description: 'The epic saga continues as Paul Atreides unites with Chani and the Fremen while on a warpath of revenge.',
     duration: '2h 46m',
     language: 'English',
@@ -2270,7 +2636,7 @@ const MOVIE_DATA = [
     genre: 'Sci-Fi / Action',
     city: 'Bengaluru',
     rating: 4.8,
-    image: 'https://images.unsplash.com/photo-1614850523296-d811ca9ea012?q=80&w=800',
+    image: 'https://images.unsplash.com/photo-1505761671935-60b3a7427bad?q=80&w=800',
     description: 'A modern avatar of Vishnu, a Hindu god, is believed to have descended to earth to protect the world from evil forces.',
     duration: '3h 01m',
     language: 'Telugu / Hindi / Kannada',
@@ -2285,7 +2651,7 @@ const MOVIE_DATA = [
     genre: 'Action / Drama',
     city: 'Hassan',
     rating: 4.9,
-    image: 'https://images.unsplash.com/photo-1485095329441-dbf71cd35c70?q=80&w=800',
+    image: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=800',
     description: 'A tale of two legendary revolutionaries and their journey far away from home.',
     duration: '3h 05m',
     language: 'Kannada',
@@ -2300,7 +2666,7 @@ const MOVIE_DATA = [
     genre: 'Biography / Drama',
     city: 'Mumbai',
     rating: 4.9,
-    image: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?q=80&w=800',
+    image: 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?q=80&w=800',
     description: 'The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb.',
     duration: '3h 00m',
     language: 'English',
@@ -2372,7 +2738,7 @@ function MovieResults({ destination, onBook }: { destination: string; onBook: (m
                         className="group flex flex-col h-full bg-white rounded-[2rem] overflow-hidden border border-black/5 hover:border-luxury-gold/20 transition-all hover:shadow-2xl"
                     >
                         <div className="relative h-80 overflow-hidden">
-                            <img src={movie.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt={movie.name} />
+                            <img src={movie.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt={movie.name} crossOrigin="anonymous" onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=800'; }} />
                             <div className="absolute top-4 left-4 flex gap-2">
                                 <span className="bg-black/80 backdrop-blur text-white text-[8px] font-bold px-2 py-1 rounded-lg uppercase tracking-widest">
                                     {movie.rating} ★
@@ -2428,7 +2794,7 @@ function MovieBookingModal({ movie, onClose }: { movie: any; onClose: () => void
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-md overflow-y-auto">
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="glass-panel w-full max-w-5xl rounded-[3rem] overflow-hidden flex flex-col lg:flex-row bg-white border border-black/10 shadow-3xl text-black">
                 <div className="lg:w-2/5 h-64 lg:h-auto relative">
-                    <img src={movie.image} className="w-full h-full object-cover" alt={movie.name} />
+                    <img src={movie.image} className="w-full h-full object-cover" alt={movie.name} crossOrigin="anonymous" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
                     <button onClick={onClose} className="absolute top-6 left-6 p-2 bg-white/20 rounded-full hover:bg-white/40 transition-colors text-white">
                         <ChevronDown className="w-5 h-5 rotate-90" />
@@ -2665,9 +3031,9 @@ function HotelResults({
                   key={h.id} 
                   className="glass-panel group overflow-hidden rounded-[2.5rem] bg-white border border-black/5 shadow-sm hover:shadow-2xl transition-all"
                 >
-                    <div className="h-64 overflow-hidden relative">
-                        <img src={h.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={h.name} referrerPolicy="no-referrer" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="h-64 overflow-hidden relative">
+                            <img src={h.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={h.name} crossOrigin="anonymous" onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=800'; }} />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                         
                         <div className="absolute top-6 right-6 bg-white/95 backdrop-blur px-4 py-2 rounded-2xl text-xs font-bold text-black border border-black/5 shadow-lg flex flex-col items-end">
                             <span className="text-[10px] text-black/40 uppercase tracking-tighter block mb-0.5">{nights} {nights === 1 ? 'Night' : 'Nights'} Stay</span>
@@ -2793,7 +3159,7 @@ function ActivityResults({ destination, onBook, filter }: { destination: string;
                         className="glass-panel group overflow-hidden rounded-[2.5rem] bg-white border border-black/5 shadow-sm hover:shadow-2xl transition-all h-full flex flex-col"
                     >
                         <div className="h-48 overflow-hidden relative">
-                            <img src={a.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={a.name} referrerPolicy="no-referrer" />
+                            <img src={a.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={a.name} crossOrigin="anonymous" onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=800'; }} />
                             <div className="absolute top-4 right-4 bg-white/95 backdrop-blur px-3 py-1.5 rounded-xl text-[10px] font-bold text-black border border-black/5 shadow-md">
                                 {formatPrice(a.price)}
                             </div>

@@ -15,7 +15,7 @@ export default function TravelJournalPage() {
         title: newEntry.title,
         content: newEntry.content,
         date: new Date().toLocaleDateString(),
-        images: [`https://picsum.photos/seed/${Math.random()}/800/600`]
+        images: [`https://images.unsplash.com/photo-1500835595561-82a0c6499f5a?auto=format&fit=crop&q=80&w=800&h=600&sig=${encodeURIComponent(newEntry.location || 'travel')}`]
     };
     addJournalEntry(entry);
     setIsAdding(false);
